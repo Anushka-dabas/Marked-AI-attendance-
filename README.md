@@ -1,67 +1,93 @@
-# Marked: AI-Powered Attendance Management System
+# Marked — AI Attendance System
 
-**Marked** is an enterprise-ready, full-stack biometric attendance tracking application designed to eliminate manual roll calls through automated identity verification. Built with a decoupled architectural framework, the platform orchestrates asynchronous computer vision (FaceID recognition) and acoustic signal processing workflows to confirm student presence against an active cloud-hosted data layer.
+> Eliminating manual roll calls through face recognition and voice verification.
 
-
-🔗 **Streamlit Link:** [https://marked-main.streamlit.app/](https://marked-main.streamlit.app/ )
-
-🔗 **Landing Page Link:** [https://marked-landing-page-theta.vercel.app/](https://marked-landing-page-theta.vercel.app/)
+🔗 [Live App](https://marked-main.streamlit.app/) &nbsp;·&nbsp; [Landing Page](https://marked-landing-page-theta.vercel.app/)
 
 ---
 
-##  Key Production Modules
+## Overview
 
-### 👨‍🎓 Autonomous Student Portal
-* **Biometric FaceID Gate:** Low-latency, passwordless authentication utilizing continuous device camera feeds to extract and match unique facial landmark profiles.
-* **Acoustic Signal Registration:** Integrated multi-modal voice token profiling to support secondary verification streams.
-* **Decentralized Course Enrollment:** Secure client-side ledger updates linking student nodes to custom sections via dynamic, alpha-numeric subject authorization keys.
-* **Performance Metrics Analytics:** Real-time personal analytics dashboard aggregating overall course metrics, total sessions held, and individual attendance ratios.
+Marked is a full-stack attendance automation system built for classrooms. Teachers upload a photo of the classroom — the app identifies every student's face, cross-references enrolled students, and logs attendance in under a second. Voice-based verification serves as a fallback mode.
 
-### 👩‍🏫 Administrative Teacher Portal
-* **Course & Ledger Orchestration:** Complete CRUD interface for provisioning course instances, specialized classroom sections, and localized access configurations.
-* **Deep Scan Batch Vision Analysis:** High-throughput processing pipeline capable of ingestion, feature parsing, and simultaneous localization/identification of multiple face vectors from a single high-resolution classroom group photograph.
-* **Voice-Based Attendance Routines:** Fallback multi-modal verification routine optimizing attendance logging through vocal processing.
-* **Aggregated Auditing Rosters:** Real-time data visualization layouts summarizing classroom presence logs, total turnout tracking, and timestamps for seamless administrative audits.
+Built end-to-end: database design, ML pipelines, auth flows, and UI — solo.
 
 ---
 
-##  Core Engineering Stack
+## Features
 
-* **Application Layer & Web Interface:** Streamlit (Python-driven reactive web layout engine)
-* **UI Customization Framework:** Embedded CSS/HTML rendering wrappers via native layout overrides
-* **Database & Infrastructure Engine:** Supabase (Cloud-native relational PostgreSQL instance running PostgREST APIs)
-* **Data Pipelines & Manipulation Framework:** Pandas (DataFrame vectorization, automated grouping, and statistical transforms)
-* **Biometric & Signal Processing Pipelines:**
-  * **Computer Vision Pipeline:** OpenCV (image matrix operations), NumPy (high-performance vector processing), and Pillow (PIL pixel data transformation)
-  * **Voice Pipeline:** Digital acoustic signal analysis and audio frame vectorization
+### Teacher Portal
+- **Face Recognition Attendance** — upload one or more classroom photos; the app detects and identifies all present students simultaneously
+- **Voice Attendance** — fallback mode using acoustic verification
+- **Subject Management** — create subjects with section codes; share enrollment keys with students
+- **Attendance Records** — timestamped logs with per-class present/absent counts
+
+### Student Portal
+- **Face ID Login** — passwordless authentication via webcam
+- **Subject Enrollment** — join classes using a teacher-issued subject code
+- **Attendance Dashboard** — personal attendance percentage per subject
 
 ---
 
-##  Relational Database Architecture
+## Tech Stack
 
-The data tier uses a relational PostgreSQL schema running on Supabase with foreign-key constraints and optimized cascade rules. Below is the structural data definition language (DDL):
+| Layer | Technology |
+|---|---|
+| UI & App Framework | Streamlit (Python) |
+| Database | Supabase — PostgreSQL + PostgREST |
+| Face Recognition | `face_recognition`, OpenCV, NumPy, Pillow |
+| Voice Processing | `webrtcvad` |
+| Data Processing | Pandas |
+| Deployment | Streamlit Cloud |
+
+---
+
+## Architecture
+
+```
+app.py                          # Entry point
+├── src/screens/                # Page-level routing
+│   ├── home_screen.py
+│   ├── teacher_screen.py
+│   └── student_screen.py
+├── src/components/             # Reusable UI components & dialogs
+├── src/pipelines/
+│   ├── face_pipeline.py        # Face detection & recognition
+│   └── voice_pipeline.py      # Voice feature extraction
+├── src/database/
+│   ├── db.py                   # All queries and CRUD logic
+│   └── config.py               # Supabase connection
+└── src/ui/
+    └── base_layout.py          # Global styling
+```
+
+---
+
+## Database Schema
+
+Relational PostgreSQL schema with foreign key constraints and cascade deletes.
 
 ```sql
 CREATE TABLE teachers (
-    teacher_id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY, 
-    username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT
+    teacher_id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    username   TEXT UNIQUE NOT NULL,
+    password   TEXT NOT NULL,
+    name       TEXT
 );
 
 CREATE TABLE students (
-    student_id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    name TEXT NOT NULL,
-    face_embedding JSONB,
+    student_id      BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    name            TEXT NOT NULL,
+    face_embedding  JSONB,
     voice_embedding JSONB
 );
 
 CREATE TABLE subjects (
-    subject_id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    subject_id   BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
     subject_code TEXT NOT NULL,
-    name TEXT DEFAULT 'UNKNOWN',
-    section TEXT DEFAULT 'N/A',
-    teacher_id BIGINT REFERENCES teachers(teacher_id) ON DELETE SET NULL 
+    name         TEXT DEFAULT 'UNKNOWN',
+    section      TEXT DEFAULT 'N/A',
+    teacher_id   BIGINT REFERENCES teachers(teacher_id) ON DELETE SET NULL
 );
 
 CREATE TABLE subject_students (
@@ -71,67 +97,37 @@ CREATE TABLE subject_students (
 );
 
 CREATE TABLE attendance_logs (
-    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
-    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    id         BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    timestamp  TIMESTAMPTZ DEFAULT NOW(),
     subject_id BIGINT REFERENCES subjects(subject_id) ON DELETE CASCADE,
     student_id BIGINT REFERENCES students(student_id) ON DELETE CASCADE,
     is_present BOOL DEFAULT TRUE
 );
 ```
 
-## Repository Structural Blueprint
+---
 
-```
-├── .streamlit/
-│   ├── config.toml             # Global runtime theme parameters and core UI overrides
-│   └── secrets.toml            # Encrypted environment credentials (ignored by Git)
-├── src/
-│   ├── components/             # Reusable UI layout nodes and modular transaction popups
-│   │   ├── dialog_add_photo.py
-│   │   ├── dialog_attendance_results.py
-│   │   ├── dialog_auto_enroll.py
-│   │   ├── dialog_create_subject.py
-│   │   ├── dialog_enroll.py
-│   │   ├── dialog_share_subject.py
-│   │   ├── dialog_voice_attendance.py
-│   │   ├── footer.py
-│   │   ├── header.py
-│   │   └── subject_card.py
-│   ├── database/
-│   │   ├── config.py           # Supabase connection orchestration layer
-│   │   └── db.py               # Transaction logic, relational queries, and CRUD procedures
-│   ├── pipelines/
-│   │   ├── face_pipeline.py    # Vision framework processing and facial matrix algorithms
-│   │   └── voice_pipeline.py   # Acoustic feature extraction and audio array handling
-│   ├── ui/
-│   │   └── base_layout.py      # Core CSS styling overrides and presentation layers
-│   └── screens/
-│       ├── home_screen.py      # Root application routing and portal multiplexing
-│       ├── student_screen.py   # Student portal view logic and camera pipeline hook
-│       └── teacher_screen.py   # Teacher authentication routing and management logs
-├── app.py                      # Core engine initialization and bootstrap script
-└── requirements.txt            # Operational dependency manifest
-```
+## Run Locally
 
-## ⚙️ Development, Deployment, & Environmental Strategy
+```bash
+# Clone the repo
+git clone https://github.com/Anushka-dabas/Marked--AI-attendance-
+cd Marked--AI-attendance-
 
-### Local Architecture Configurations: 
-To initialize and audit the application pipeline in a local sandbox execution environment, construct a local parameters file at .streamlit/secrets.toml:
+# Install dependencies
+pip install -r requirements.txt
 
-```
-SUPABASE_URL = "[https://your-project-id.supabase.co](https://your-project-id.supabase.co)"
-SUPABASE_KEY = "your-anon-public-key"
-```
+# Add Supabase credentials
+# Create .streamlit/secrets.toml with:
+# SUPABASE_URL = "https://your-project.supabase.co"
+# SUPABASE_KEY = "your-anon-key"
 
-### To boot the local development environment, use the application layer execution command:
-```
+# Start the app
 streamlit run app.py
 ```
 
-### Push the Corrected Work to GitHub
-Once you have updated the text contents inside your file, run the regular pipeline sequence in your terminal to sync your clean structural blueprint up to the main branch line:
-```
-git add README.md
-git commit -m "docs: match structural blueprint map to actual project file layout"
-git push origin main
-```
+---
+
+## Built by
+
+**Anushka Dabas** — [GitHub](https://github.com/Anushka-dabas) 
