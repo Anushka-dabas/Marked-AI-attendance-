@@ -2,6 +2,8 @@
 
 **Marked** is an enterprise-ready, full-stack biometric attendance tracking application designed to eliminate manual roll calls through automated identity verification. Built with a decoupled architectural framework, the platform orchestrates asynchronous computer vision (FaceID recognition) and acoustic signal processing workflows to confirm student presence against an active cloud-hosted data layer.
 
+🔗 **Live Production Link:** [https://marked-main.streamlit.app/](https://marked-main.streamlit.app/ )
+
 ---
 
 ##  Key Production Modules
