@@ -16,7 +16,7 @@ def header_home():
 
 def header_dashboard():
 
-    logo_url = "https://i.postimg.cc/Cxjwm7Yt/Chat-GPT-Image-May-20-2026-10-37-59-PM-removebg-preview.png"
+    logo_url = "https://i.postimg.cc/cCMBzhpP/Chat-GPT-Image-May-16-2026-08-31-19-PM-removebg-preview.png"
     
     st.markdown(f"""
         <div style="display:flex; align-items:center; justify-content:center; gap:10px">
